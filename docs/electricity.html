@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Berllan Electricity</title>
+    <meta charset="utf-8" />
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.20.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.18.2"></script>
+
+    <style media="screen">
+      /* Add space between Vega-Embed links  */
+      .vega-actions a {
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Berllan Electricity</h1>
+    <!-- Container for the visualization -->
+    <div id="daily"></div>
+    <div id="cumulative"></div>
+    <div id="recent"></div>
+
+    <script>
+      const daily = {
+        $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+        width: 1000,
+        height: 400,
+        padding: 5,
+        data: { url: "electricity.csv" },
+        transform: [
+          {
+            frame: [-7, 0],
+            window: [
+              {
+                field: "solar",
+                op: "mean",
+                as: "rolling_solar",
+              },
+            ],
+          },
+          {
+            frame: [-7, 0],
+            window: [
+              {
+                field: "import",
+                op: "mean",
+                as: "rolling_import",
+              },
+            ],
+          },
+          {
+            frame: [-7, 0],
+            window: [
+              {
+                field: "export",
+                op: "mean",
+                as: "rolling_export",
+              },
+            ],
+          },
+          {
+            frame: [-7, 0],
+            window: [
+              {
+                field: "ASHP",
+                op: "mean",
+                as: "rolling_ASHP",
+              },
+            ],
+          },
+        ],
+        layer: [
+          {
+            mark: {
+              type: "line",
+              stroke: "red",
+              strokeOpacity: 0.2,
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "ASHP", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "red",
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "rolling_ASHP", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#FF7F0E",
+              strokeOpacity: 0.2,
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "solar", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#FF7F0E",
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "rolling_solar", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#1F77B4",
+              strokeOpacity: 0.2,
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "import", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#1F77B4",
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "rolling_import", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "purple",
+              strokeOpacity: 0.2,
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "export", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "purple",
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "rolling_export", type: "quantitative" },
+            },
+          },
+        ],
+      };
+      const cumulative = {
+        $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+        width: 1000,
+        height: 400,
+        padding: 5,
+        data: { url: "electricity.csv" },
+        transform: [
+          {
+            frame: [null, 0],
+            window: [
+              {
+                field: "solar",
+                op: "sum",
+                as: "cumulative_solar",
+              },
+            ],
+          },
+          {
+            frame: [null, 0],
+            window: [
+              {
+                field: "import",
+                op: "sum",
+                as: "cumulative_import",
+              },
+            ],
+          },
+          {
+            frame: [null, 0],
+            window: [
+              {
+                field: "export",
+                op: "sum",
+                as: "cumulative_export",
+              },
+            ],
+          },
+          {
+            frame: [null, 0],
+            window: [
+              {
+                field: "ASHP",
+                op: "sum",
+                as: "cumulative_ASHP",
+              },
+            ],
+          },
+        ],
+        layer: [
+          {
+            mark: {
+              type: "line",
+              stroke: "red",
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "cumulative_ASHP", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#FF7F0E",
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "cumulative_solar", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "#1F77B4",
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "cumulative_import", type: "quantitative" },
+            },
+          },
+          {
+            mark: {
+              type: "line",
+              stroke: "purple",
+              tooltip: true,
+            },
+            encoding: {
+              x: { field: "date", type: "temporal" },
+              y: { field: "cumulative_export", type: "quantitative" },
+            },
+          },
+        ],
+      };
+      vegaEmbed("#daily", daily);
+      vegaEmbed("#cumulative", cumulative);
+    </script>
+  </body>
+</html>
