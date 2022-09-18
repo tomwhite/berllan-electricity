@@ -17,7 +17,7 @@ async def _get_octopus_energy_consumption_async(octopus_api_token, octopus_mprn,
     """Call the Octopus Energy API and get the daily energy consumption as a Pandas dataframe"""
     async with OctopusEnergyRestClient(octopus_api_token) as client:
         # TODO: fix so page size doesn't need to keep growing over time!
-        consumption = await client.get_electricity_consumption_v1(octopus_mprn, octopus_serial_number, aggregate=Aggregate.DAY, page_size=1000)
+        consumption = await client.get_electricity_consumption_v1(octopus_mprn, octopus_serial_number, group_by=Aggregate.DAY, page_size=1000)
         df = pd.DataFrame.from_records(consumption["results"])
         return df
 

@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+  schedule:
+    - cron: "25 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+          cache: "pip" # caching pip dependencies
+      - run: pip install -r requirements.txt
+      - run: python download_data.py
+        env:
+          SOLAR_EDGE_API_KEY: ${{ secrets.SOLAR_EDGE_API_KEY }}
+          SOLAR_EDGE_SITE_ID: ${{ secrets.SOLAR_EDGE_SITE_ID }}
+          OCTOPUS_API_TOKEN: ${{ secrets.OCTOPUS_API_TOKEN }}
+          OCTOPUS_MPRN: ${{ secrets.OCTOPUS_MPRN }}
+          OCTOPUS_EXPORT_MPRN: ${{ secrets.OCTOPUS_EXPORT_MPRN }}
+          OCTOPUS_SERIAL_NUMBER: ${{ secrets.OCTOPUS_SERIAL_NUMBER }}
+      - name: Set variable to check if anything changed
+        id: decide_variable
+        run: |-
+          echo "##[set-output name=changed;]$(git diff --quiet HEAD docs/*.csv; echo $?)"
+      - name: Commit files
+        if: steps.decide_variable.outputs.changed != 0
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs
+          git commit -m "Update for $(date +'%Y-%m-%d')"
+      - name: Push changes
+        if: steps.decide_variable.outputs.changed != 0
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
