@@ -17,7 +17,7 @@ async def _get_octopus_energy_consumption_async(octopus_api_token, octopus_mprn,
     """Call the Octopus Energy API and get the daily energy consumption as a Pandas dataframe"""
     async with OctopusEnergyRestClient(octopus_api_token) as client:
         # TODO: fix so page size doesn't need to keep growing over time!
-        consumption = await client.get_electricity_consumption_v1(octopus_mprn, octopus_serial_number, group_by=Aggregate.DAY, page_size=1000)
+        consumption = await client.get_electricity_consumption_v1(octopus_mprn, octopus_serial_number, group_by=Aggregate.DAY, page_size=1500)
         df = pd.DataFrame.from_records(consumption["results"])
         return df
 
@@ -77,20 +77,21 @@ if __name__ == "__main__":
         solar_edge_api_key = os.environ["SOLAR_EDGE_API_KEY"]
 
         # SolarEdge can only download one year at a time at daily resolution, so do in batches
+        yesterday = datetime.now() - timedelta(1)
         solar_dfs = []
-        for year in range(2020, 2022):
+        for year in range(2020, yesterday.year):
             solar_df = get_solar_edge_energy(
                 solar_edge_site_id, solar_edge_api_key, f"{year}-01-01", f"{year}-12-31"
             )
             solar_dfs.append(solar_df)
 
-        yesterday = datetime.now() - timedelta(1)
         start_date = datetime.strftime(yesterday, "%Y-01-01")
         end_date = datetime.strftime(yesterday, "%Y-%m-%d")
-        solar_df = get_solar_edge_energy(
-            solar_edge_site_id, solar_edge_api_key, start_date, end_date
-        )
-        solar_dfs.append(solar_df)
+        if start_date != end_date:
+            solar_df = get_solar_edge_energy(
+                solar_edge_site_id, solar_edge_api_key, start_date, end_date
+            )
+            solar_dfs.append(solar_df)
 
         solar_df = pd.concat(solar_dfs)
 
@@ -101,6 +102,8 @@ if __name__ == "__main__":
     solar_df = solar_df.rename(columns={"value": "solar"})
     solar_df["solar"] = solar_df["solar"] / 1000 # convert Wh to kWh (units)
     solar_df["date"] = pd.to_datetime(solar_df["date"]).dt.date
+
+    # solar_df.to_csv(f"docs/solar.csv", index=False)
 
     # Octopus
 
@@ -128,6 +131,9 @@ if __name__ == "__main__":
     electricity_export_df["date"] = pd.to_datetime(electricity_export_df["interval_start"], utc=True).dt.date
     electricity_export_df = electricity_export_df.rename(columns={"consumption": "export"})
     electricity_export_df = electricity_export_df[["date", "export"]]
+
+    # electricity_df.to_csv(f"docs/octopus-import.csv", index=False)
+    # electricity_export_df.to_csv(f"docs/octopus-export.csv", index=False)
 
     # Historical data (manually entered)
 
